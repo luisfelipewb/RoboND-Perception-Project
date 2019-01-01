@@ -60,20 +60,24 @@ def pcl_callback(pcl_msg):
     # Statistical Outlier Filtering
     outlier_filter = pcl_data.make_statistical_outlier_filter()
     outlier_filter.set_mean_k(50)
-    outlier_filter.set_std_dev_mul_thresh(1.0)
+    outlier_filter.set_std_dev_mul_thresh(1.2)
     cloud_filtered = outlier_filter.filter()
     pcl.save(cloud_filtered, '02_statistical_filtered.pcd')
 
     # Voxel Grid Downsampling
     vox = cloud_filtered.make_voxel_grid_filter()
-    vox.set_leaf_size(0.01,0.01,0.01)
+    vox.set_leaf_size(0.005,0.005,0.005)
     cloud_filtered = vox.filter()
     pcl.save(cloud_filtered, '03_voxel_downsampled.pcd')
 
     # PassThrough Filter
     passthrough = cloud_filtered.make_passthrough_filter()
     passthrough.set_filter_field_name('z')
-    passthrough.set_filter_limits(0.75,1.1)
+    passthrough.set_filter_limits(0.6,1.2)
+    cloud_filtered = passthrough.filter()
+    passthrough = cloud_filtered.make_passthrough_filter()
+    passthrough.set_filter_field_name('y')
+    passthrough.set_filter_limits(-0.5,0.5)
     cloud_filtered = passthrough.filter()
     pcl.save(cloud_filtered, '04_passthrough_filtered.pcd')
 
@@ -89,6 +93,9 @@ def pcl_callback(pcl_msg):
     cloud_objects = cloud_filtered.extract(inliers, negative=True)
     pcl.save(cloud_table, '05_ransac_segmented_table.pcd')
     pcl.save(cloud_objects, '05_ransac_segmented_objects.pcd')
+
+    ros_objects = pcl_to_ros(cloud_objects)
+    pcl_objects_pub.publish(ros_objects)
 
     # Euclidean Clustering
     white_cloud = XYZRGB_to_XYZ(cloud_objects)
@@ -194,6 +201,7 @@ if __name__ == '__main__':
 
     # Create Publishers
     pcl_cluster_pub = rospy.Publisher("/pcl_cluster", PointCloud2, queue_size=1)
+    pcl_objects_pub = rospy.Publisher("/pcl_objects", PointCloud2, queue_size=1)
 
     # TODO: Load Model From disk
 
