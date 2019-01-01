@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 import pickle
 import itertools
 import numpy as np
@@ -8,6 +9,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn import model_selection
 from sklearn import metrics
 import sklearn
+print('sklearn lib version:')
 print(sklearn.__version__)
 
 def plot_confusion_matrix(cm, classes,
@@ -38,8 +40,15 @@ def plot_confusion_matrix(cm, classes,
     plt.xlabel('Predicted label')
 
 # Load training data from disk
+# File names are provided as arguments
+if len(sys.argv) < 3:
+    print('Please provide two arguments: training_set and classifier file names')
+    quit()
+else:
+    training_set_path = sys.argv[1]
+    classifier_path = sys.argv[2]
 
-training_set = pickle.load(open('training_set.sav', 'rb'))
+training_set = pickle.load(open(training_set_path, 'rb'))
 
 # Format the features and labels for use with scikit learn
 feature_list = []
@@ -103,7 +112,7 @@ clf.fit(X=X_train, y=y_train)
 model = {'classifier': clf, 'classes': encoder.classes_, 'scaler': X_scaler}
 
 # Save classifier to disk
-pickle.dump(model, open('model.sav', 'wb'))
+pickle.dump(model, open(classifier_path, 'wb'))
 
 # Plot non-normalized confusion matrix
 plt.figure()
