@@ -49,26 +49,14 @@ def send_to_yaml(yaml_filename, dict_list):
 
 # Callback function for your Point Cloud Subscriber
 def pcl_callback(pcl_msg):
-    print('callback')
+
 # Exercise-2 TODOs:
     t1 = time.time()
 
     # Convert ROS msg to PCL data
     pcl_data = ros_to_pcl(pcl_msg)
     pcl.save(pcl_data, '01_original.pcd')
-
-    # Statistical Outlier Filtering
-    outlier_filter = pcl_data.make_statistical_outlier_filter()
-    outlier_filter.set_mean_k(50)
-    outlier_filter.set_std_dev_mul_thresh(1.2)
-    cloud_filtered = outlier_filter.filter()
-    pcl.save(cloud_filtered, '02_statistical_filtered.pcd')
-
-    # Voxel Grid Downsampling
-    vox = cloud_filtered.make_voxel_grid_filter()
-    vox.set_leaf_size(0.005,0.005,0.005)
-    cloud_filtered = vox.filter()
-    pcl.save(cloud_filtered, '03_voxel_downsampled.pcd')
+    cloud_filtered = pcl_data
 
     # PassThrough Filter
     passthrough = cloud_filtered.make_passthrough_filter()
@@ -79,7 +67,20 @@ def pcl_callback(pcl_msg):
     passthrough.set_filter_field_name('y')
     passthrough.set_filter_limits(-0.5,0.5)
     cloud_filtered = passthrough.filter()
-    pcl.save(cloud_filtered, '04_passthrough_filtered.pcd')
+    pcl.save(cloud_filtered, '02_passthrough_filtered.pcd')
+
+    # Statistical Outlier Filtering
+    outlier_filter = cloud_filtered.make_statistical_outlier_filter()
+    outlier_filter.set_mean_k(50)
+    outlier_filter.set_std_dev_mul_thresh(1.2)
+    cloud_filtered = outlier_filter.filter()
+    pcl.save(cloud_filtered, '03_statistical_filtered.pcd')
+
+    # Voxel Grid Downsampling
+    vox = cloud_filtered.make_voxel_grid_filter()
+    vox.set_leaf_size(0.005,0.005,0.005)
+    cloud_filtered = vox.filter()
+    pcl.save(cloud_filtered, '04_voxel_downsampled.pcd')
 
     # RANSAC Plane Segmentation
     seg = cloud_filtered.make_segmenter()
