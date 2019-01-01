@@ -24,6 +24,7 @@ from pr2_robot.srv import *
 from rospy_message_converter import message_converter
 import yaml
 
+import time
 
 # Helper function to get surface normals
 def get_normals(cloud):
@@ -48,8 +49,9 @@ def send_to_yaml(yaml_filename, dict_list):
 
 # Callback function for your Point Cloud Subscriber
 def pcl_callback(pcl_msg):
-
+    print('callback')
 # Exercise-2 TODOs:
+    t1 = time.time()
 
     # Convert ROS msg to PCL data
     pcl_data = ros_to_pcl(pcl_msg)
@@ -141,7 +143,8 @@ def pcl_callback(pcl_msg):
     #    pr2_mover(detected_objects_list)
     #except rospy.ROSInterruptException:
     #    pass
-
+    t2 = time.time()
+    print ("Callback elapsed time: ", str(t2-t1))
 # function to load parameters and request PickPlace service
 def pr2_mover(object_list):
 
