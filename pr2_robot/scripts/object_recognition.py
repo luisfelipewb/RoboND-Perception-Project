@@ -174,61 +174,64 @@ def pcl_callback(pcl_msg):
         pass
     t2 = time.time()
     print ("Callback elapsed time: ", str(t2-t1))
+
 # function to load parameters and request PickPlace service
 def pr2_mover(detected_object_list):
 
     # TODO: Initialize variables
     test_scene_num = Int32()
-    test_scene_num.data = 1
-
     object_name = String()
-    object_name.data = 'objectnametest'
-
     arm_name = String()
-    arm_name.data = 'armnametest'
-    #If green -> right
-    #If red -> left
-
     pick_pose = Pose()
-    pick_pose.position.x = 1
-    pick_pose.position.y = 2
-    pick_pose.position.z = 3
-
     place_pose = Pose()
-    place_pose.position.x = 4
-    place_pose.position.y = 5
-    place_pose.position.z = 6
 
     yaml_dictionary_list =[]
-
-    # TODO: Get/Read parameters
+    test_scene_num.data = 3
+    # Get/Read parameters
     object_list_param = rospy.get_param('/object_list')
     dropbox_list_param = rospy.get_param('/dropbox')
 
     # TODO: Parse parameters into individual variables
-    labels = []
-    centroids = []
-    for detected_object in detected_object_list:
-        labels.append(detected_object.label)
-        points_arr = ros_to_pcl(detected_object.cloud).to_array()
-        centroids.append(np.mean(points_arr, axis=0)[:3])
-    #print (labels)
-    #print (centroids)
+    for dropbox in dropbox_list_param:
+        if dropbox['name'] == 'left':
+            left_position = dropbox['position']
+        if dropbox['name'] == 'right':
+            right_position = dropbox['position']
 
     # TODO: Rotate PR2 in place to capture side tables for the collision map
 
-    # TODO: Loop through the pick list
-    #print "Pick list:"
-    #print len(object_list_param)
-    #for object_param in object_list_param:
-    #    print object_param['name']
-        # TODO: Get the PointCloud for a given object and obtain it's centroid
+    # Loop through the pick list
+    for object_param in object_list_param:
+        object_name.data = object_param['name']
 
-        # TODO: Create 'place_pose' for the object
+        # Assign the arm to be used for pick_place
+        # Create 'place_pose' for the object
+        group = object_param['group']
+        if group == 'green':
+            arm_name.data = 'right'
+            place_pose.position.x = right_position[0]
+            place_pose.position.y = right_position[1]
+            place_pose.position.z = right_position[2]
+        elif group == 'red':
+            arm_name.data = 'left'
+            place_pose.position.x = left_position[0]
+            place_pose.position.y = left_position[1]
+            place_pose.position.z = left_position[2]
+        else:
+            print("Invalid group")
 
-        # TODO: Assign the arm to be used for pick_place
+        # Get the PointCloud for a given object and obtain it's centroid
+        for detected_object in detected_object_list:
+            if detected_object.label == object_param['name']:
+                points_arr = ros_to_pcl(detected_object.cloud).to_array()
+                centroid = np.mean(points_arr, axis=0)[:3]
+                pick_pose.position.x = np.asscalar(centroid[0])
+                pick_pose.position.y = np.asscalar(centroid[1])
+                pick_pose.position.z = np.asscalar(centroid[2])
 
-        # TODO: Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
+        # Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
+        dict_entry = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
+        yaml_dictionary_list.append(dict_entry)
 
         # Wait for 'pick_place_routine' service to come up
         #rospy.wait_for_service('pick_place_routine')
@@ -244,11 +247,9 @@ def pr2_mover(detected_object_list):
         #except rospy.ServiceException, e:
         #    print "Service call failed: %s"%e
 
-    # TODO: Output your request parameters into output yaml file
-    dict_entry = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
-    yaml_dictionary_list.append(dict_entry)
-    print("Generate yaml file")
-    send_to_yaml("test.yaml", yaml_dictionary_list)
+    # Output your request parameters into output yaml file
+    filename = "output_" + str(test_scene_num.data) + ".yaml"
+    send_to_yaml(filename, yaml_dictionary_list)
 
 if __name__ == '__main__':
 
