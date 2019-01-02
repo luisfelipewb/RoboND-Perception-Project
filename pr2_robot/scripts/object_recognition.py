@@ -55,7 +55,7 @@ def pcl_callback(pcl_msg):
 
     # Convert ROS msg to PCL data
     pcl_data = ros_to_pcl(pcl_msg)
-    pcl.save(pcl_data, '01_original.pcd')
+    #pcl.save(pcl_data, '01_original.pcd')
     cloud_filtered = pcl_data
 
     # PassThrough Filter
@@ -67,20 +67,23 @@ def pcl_callback(pcl_msg):
     passthrough.set_filter_field_name('y')
     passthrough.set_filter_limits(-0.5,0.5)
     cloud_filtered = passthrough.filter()
-    pcl.save(cloud_filtered, '02_passthrough_filtered.pcd')
+    #pcl.save(cloud_filtered, '02_passthrough_filtered.pcd')
+    #pcl_passthrough_pub.publish(pcl_to_ros(cloud_filtered))
 
     # Statistical Outlier Filtering
     outlier_filter = cloud_filtered.make_statistical_outlier_filter()
     outlier_filter.set_mean_k(50)
     outlier_filter.set_std_dev_mul_thresh(1.2)
     cloud_filtered = outlier_filter.filter()
-    pcl.save(cloud_filtered, '03_statistical_filtered.pcd')
+    #pcl.save(cloud_filtered, '03_statistical_filtered.pcd')
+    #pcl_statistical_pub.publish(pcl_to_ros(cloud_filtered))
 
     # Voxel Grid Downsampling
     vox = cloud_filtered.make_voxel_grid_filter()
     vox.set_leaf_size(0.005,0.005,0.005)
     cloud_filtered = vox.filter()
-    pcl.save(cloud_filtered, '04_voxel_downsampled.pcd')
+    #pcl.save(cloud_filtered, '04_voxel_downsampled.pcd')
+    #pcl_downsampled_pub.publish(pcl_to_ros(cloud_filtered))
 
     # RANSAC Plane Segmentation
     seg = cloud_filtered.make_segmenter()
@@ -92,11 +95,9 @@ def pcl_callback(pcl_msg):
     inliers, coefficients = seg.segment()
     cloud_table = cloud_filtered.extract(inliers, negative=False)
     cloud_objects = cloud_filtered.extract(inliers, negative=True)
-    pcl.save(cloud_table, '05_ransac_segmented_table.pcd')
-    pcl.save(cloud_objects, '05_ransac_segmented_objects.pcd')
-
-    ros_objects = pcl_to_ros(cloud_objects)
-    pcl_objects_pub.publish(ros_objects)
+    #pcl.save(cloud_table, '05_ransac_segmented_table.pcd')
+    #pcl.save(cloud_objects, '05_ransac_segmented_objects.pcd')
+    #pcl_objects_pub.publish(pcl_to_ros(cloud_objects))
 
     # Euclidean Clustering
     white_cloud = XYZRGB_to_XYZ(cloud_objects)
@@ -120,7 +121,7 @@ def pcl_callback(pcl_msg):
                                              rgb_to_float(cluster_color[j])])
     cluster_cloud = pcl.PointCloud_PointXYZRGB()
     cluster_cloud.from_list(color_cluster_point_list)
-    pcl.save(cluster_cloud, '06_colored_cluster.pcd')
+    #pcl.save(cluster_cloud, '06_colored_cluster.pcd')
 
     # Convert PCL data to ROS messages
     ros_cluster_cloud = pcl_to_ros(cluster_cloud)
@@ -221,8 +222,11 @@ if __name__ == '__main__':
     pcl_sub = rospy.Subscriber("/pr2/world/points/",pc2.PointCloud2, pcl_callback, queue_size=1)
 
     # Create Publishers
+    #pcl_passthrough_pub = rospy.Publisher("/pcl_passthrough", PointCloud2, queue_size=1)
+    #pcl_statistical_pub = rospy.Publisher("/pcl_statistical", PointCloud2, queue_size=1)
+    #pcl_downsampled_pub = rospy.Publisher("/pcl_downsampled", PointCloud2, queue_size=1)
+    #pcl_objects_pub = rospy.Publisher("/pcl_objects", PointCloud2, queue_size=1)
     pcl_cluster_pub = rospy.Publisher("/pcl_cluster", PointCloud2, queue_size=1)
-    pcl_objects_pub = rospy.Publisher("/pcl_objects", PointCloud2, queue_size=1)
 
     object_markers_pub = rospy.Publisher("/object_markers", Marker, queue_size=1)
     detected_objects_pub = rospy.Publisher("/detected_objects", DetectedObjectsArray, queue_size=1)
