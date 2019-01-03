@@ -186,10 +186,11 @@ def pr2_mover(detected_object_list):
     place_pose = Pose()
 
     yaml_dictionary_list =[]
-    test_scene_num.data = 3
+
     # Get/Read parameters
     object_list_param = rospy.get_param('/object_list')
     dropbox_list_param = rospy.get_param('/dropbox')
+    test_scene_num.data = rospy.get_param('test_scene_num')
 
     # TODO: Parse parameters into individual variables
     for dropbox in dropbox_list_param:
