@@ -235,18 +235,17 @@ def pr2_mover(detected_object_list):
         yaml_dictionary_list.append(dict_entry)
 
         # Wait for 'pick_place_routine' service to come up
-        #rospy.wait_for_service('pick_place_routine')
+        rospy.wait_for_service('pick_place_routine')
 
-        #try:
-        #    pick_place_routine = rospy.ServiceProxy('pick_place_routine', PickPlace)
+        try:
+            pick_place_routine = rospy.ServiceProxy('pick_place_routine', PickPlace)
 
             # TODO: Insert your message variables to be sent as a service request
-            # resp = pick_place_routine(TEST_SCENE_NUM, OBJECT_NAME, WHICH_ARM, PICK_POSE, PLACE_POSE)
+            resp = pick_place_routine(test_scene_num, object_name, arm_name, pick_pose, place_pose)
+            print ("Response: ",resp.success)
 
-            # print ("Response: ",resp.success)
-
-        #except rospy.ServiceException, e:
-        #    print "Service call failed: %s"%e
+        except rospy.ServiceException, e:
+            print "Service call failed: %s"%e
 
     # Output your request parameters into output yaml file
     filename = "output_" + str(test_scene_num.data) + ".yaml"
